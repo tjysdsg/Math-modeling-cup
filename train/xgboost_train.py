@@ -59,14 +59,15 @@ print("data_Y = ", data_Y)
 X_train, X_test, y_train, y_test = train_test_split(data_X, data_Y,
                                                     test_size=0.2, random_state=42)
 
-dtrain = xgb.DMatrix(X_train, label=y_train.to_numpy())
+# dtrain = xgb.DMatrix(X_train, label=y_train.to_numpy())
+dtrain = xgb.DMatrix(data_X, label=data_Y.to_numpy())
 
 params = {
     'booster': 'gbtree',
     'objective': 'multi:softmax',
     'num_class': 3,
     'gamma': 0.1,
-    'max_depth': 9,
+    'max_depth': 90,
     'lambda': 2,
     'subsample': 0.7,
     'colsample_bytree': 0.7,
@@ -83,3 +84,7 @@ dtest = xgb.DMatrix(X_test)
 y_pred = xgb_model.predict(dtest)
 print(max(y_pred))
 print(accuracy_score(y_pred, y_test.to_numpy()))
+
+print(np.count_nonzero(y_pred[y_test == 1] == 1) / np.count_nonzero(y_test == 1))
+
+
