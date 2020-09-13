@@ -37,17 +37,6 @@ categories = [
     '国际',
 ]
 
-enterprise_reputation = {}
-enterprise_category = {}
-for i, row in enterprise_info.iterrows():
-    enterprise_reputation[row['企业代号']] = row['信誉评级']
-
-    enterprise_category[row['企业代号']] = -1
-    for j, c in enumerate(categories):
-        if c in row['企业名称']:
-            enterprise_category[row['企业代号']] = j
-            break
-
 reputation_map = {
     'A': 0,
     'B': 1,
@@ -60,6 +49,18 @@ status_to_int = {
     '作废发票': 1,
 }
 
+feature_space = [
+    'revenue',
+    'income', 'cost',
+    'income_std', 'cost_std',
+    'income_exclude_refund', 'cost_exclude_refund',
+    'income_gross_valid', 'cost_gross_valid',
+    'income_tax_ratio', 'cost_tax_ratio',
+    'top5_buyer_ratio',
+    'income_partners', 'cost_partners',
+    'category',
+]
+
 
 def invoice_status(df: pd.DataFrame):
     df['status'] = df['发票状态'].map(status_to_int).astype(np.int)
@@ -70,7 +71,7 @@ def safe_divde(a, b):
     return np.divide(a, b, out=np.zeros_like(a), where=b != 0)
 
 
-def preprocess(df_cost: pd.DataFrame, df_rev: pd.DataFrame):
+def preprocess(df_cost: pd.DataFrame, df_rev: pd.DataFrame, enterprise_category: dict):
     df_cost = invoice_status(df_cost)
     df_rev = invoice_status(df_rev)
     df_cost['partner'] = df_cost['销方单位代号']
@@ -122,7 +123,6 @@ def preprocess(df_cost: pd.DataFrame, df_rev: pd.DataFrame):
 
             'top5_buyer_ratio': top5_buyer_ratio,
 
-            'reputation': reputation_map[enterprise_reputation[firm_code]],
             'category': enterprise_category[firm_code],
         })
 
@@ -133,21 +133,19 @@ def preprocess(df_cost: pd.DataFrame, df_rev: pd.DataFrame):
 
 
 def main():
-    df1 = pd.read_csv('../data/1_in.csv')
-    df2 = pd.read_csv('../data/1_out.csv')
-    df = preprocess(df1, df2)
+    enterprise_reputation = {}
+    enterprise_category = {}
+    for i, row in enterprise_info.iterrows():
+        enterprise_reputation[row['企业代号']] = row['信誉评级']
 
-    feature_space = [
-        'revenue',
-        'income', 'cost',
-        'income_std', 'cost_std',
-        'income_exclude_refund', 'cost_exclude_refund',
-        'income_gross_valid', 'cost_gross_valid',
-        'income_tax_ratio', 'cost_tax_ratio',
-        'top5_buyer_ratio',
-        'income_partners', 'cost_partners',
-        'category',
-    ]
+        enterprise_category[row['企业代号']] = -1
+        for j, c in enumerate(categories):
+            if c in row['企业名称']:
+                enterprise_category[row['企业代号']] = j
+                break
+
+    df = preprocess(pd.read_csv('../data/1_in.csv'), pd.read_csv('../data/1_out.csv'), enterprise_category)
+    df['reputation'] = df['firm_code'].map(enterprise_reputation).map(reputation_map)
 
     data_X = df[feature_space]
     data_Y = df['reputation']
@@ -164,6 +162,9 @@ def main():
     print('C:', np.count_nonzero(y_pred[y_test == 2] == 2) / np.count_nonzero(y_test == 2))
     print('D:', np.count_nonzero(y_pred[y_test == 3] == 3) / np.count_nonzero(y_test == 3))
     print(accuracy_score(y_pred, y_test))
+
+    # save
+    model.save_model('model.cat')
 
 
 if __name__ == '__main__':
