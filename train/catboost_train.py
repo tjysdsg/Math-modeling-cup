@@ -6,7 +6,7 @@ from catboost import CatBoostClassifier
 
 pd.set_option('display.max_columns', None)
 
-enterprise_info = pd.read_csv('../data/1_info.csv')
+enterprise_info = pd.read_csv('../data/meta_1.csv')
 
 categories = [
     '环保',
@@ -144,7 +144,7 @@ def main():
                 enterprise_category[row['企业代号']] = j
                 break
 
-    df = preprocess(pd.read_csv('../data/1_in.csv'), pd.read_csv('../data/1_out.csv'), enterprise_category)
+    df = preprocess(pd.read_csv('../data/cost_1.csv'), pd.read_csv('../data/income_1.csv'), enterprise_category)
     df['reputation'] = df['firm_code'].map(enterprise_reputation).map(reputation_map)
 
     data_X = df[feature_space]

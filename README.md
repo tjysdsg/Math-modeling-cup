@@ -1,0 +1,16 @@
+- data: 导出到csv格式后的比赛数据
+    - client_loss.csv: 利率和对应的客户流失率
+    - cost_1.csv: 附件一中的进项数据
+    - income_1.csv: 附件一中的销项数据
+    - cost_2.csv: 附件二中的进项数据
+    - income_2.csv: 附件二中的销项数据
+    - meta_1.csv: 附件一中的企业信息
+    - meta_2.csv: 附件二中的企业信息
+- train: 训练模型的代码
+    - catboost_train.py: 问题一对应的模型训练和解题代码
+    - model.cat: 问题一训练好的模型
+    - 2.py: 问题二对应的模型训练和解题代码
+    - pred.json: 对于附件二中各企业信誉的预测结果
+    - profit_pred.csv: 对于附件二中各企业信贷利润的预测结果
+- eda.ipynb: 数据探索和可视化
+- deposit.png: 数据可视化图

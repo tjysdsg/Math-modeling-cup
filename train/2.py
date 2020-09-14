@@ -3,9 +3,8 @@ import json
 import numpy as np
 from train.catboost_train import invoice_status, preprocess, categories, feature_space
 from catboost import CatBoostClassifier
-from sklearn.linear_model import LinearRegression
 
-enterprise_info = pd.read_csv('../data/2_info.csv')
+enterprise_info = pd.read_csv('../data/meta_2.csv')
 enterprise_category = {}
 for i, row in enterprise_info.iterrows():
     enterprise_category[row['企业代号']] = -1
@@ -68,7 +67,7 @@ def get_feats(df_cost: pd.DataFrame, df_rev: pd.DataFrame, reputation):
 
 
 def L(dM, dN, w_m, m_std, n_std, reputation, coef: np.ndarray):
-    x = np.asarray([dM, m_std, dN, 5 - reputation]).T
+    x = np.asarray([dM, m_std, dN, 4 - reputation]).T
     ret = x * coef[np.newaxis, :]
     return np.sum(ret, axis=1)
 
@@ -96,9 +95,8 @@ def cons_cost(x, a, b):
 
 
 def train():
-    """
-    df1 = pd.read_csv('../data/2_in.csv')
-    df2 = pd.read_csv('../data/2_out.csv')
+    df1 = pd.read_csv('../data/cost_2.csv')
+    df2 = pd.read_csv('../data/income_2.csv')
 
     print('predicting reputation...')
     model = CatBoostClassifier()
@@ -110,11 +108,10 @@ def train():
 
     reputations = dict(zip(df['firm_code'].tolist(), pred.tolist()))
     json.dump(reputations, open('pred.json', 'w'))
-    """
 
     reputations = json.load(open('pred.json', 'r'))
-    df1 = pd.read_csv('../data/2_in.csv')
-    df2 = pd.read_csv('../data/2_out.csv')
+    df1 = pd.read_csv('../data/cost_2.csv')
+    df2 = pd.read_csv('../data/income_2.csv')
     df = get_feats(df1, df2, reputations)
 
     firm_code = df['firm_code']
@@ -135,17 +132,6 @@ def train():
                 cons_cost(np.sum(l), 0, 100000000)
         )
 
-    def constraint(coef):
-        prof, l, lp = calc_profit(dM, dN, w_m, m_std, n_std, reputation, coef)
-        cons = np.asarray([
-            np.all(l >= 100000),
-            np.all(l <= 1000000),
-            np.all(lp >= 0.04),
-            np.all(lp <= 0.15),
-            np.sum(l) <= 100000000,
-        ])
-        return cons.astype(np.int)
-
     from scipy.optimize import minimize
 
     print('start minimizing')
@@ -155,10 +141,6 @@ def train():
         np.full(n_params, 0.2),
         method='SLSQP',
         options={'disp': True, 'maxiter': 100000},
-        # constraints={
-        #     'type': 'ineq',
-        #     'fun': lambda x: constraint(x),
-        # }
     )
     coef = res.x
     print(coef)
